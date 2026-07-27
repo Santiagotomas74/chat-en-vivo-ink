@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initializeSocket = initializeSocket;
 exports.getIO = getIO;
+exports.isUserOnline = isUserOnline;
+exports.getOnlineUsers = getOnlineUsers;
 const socket_io_1 = require("socket.io");
 let io;
 const onlineUsers = new Map();
@@ -14,44 +16,42 @@ function initializeSocket(server) {
     });
     io.on("connection", (socket) => {
         console.log("✅ Cliente conectado:", socket.id);
-        console.log("✅ Socket conectado:", socket.id);
         /*
-        ======================================
+        =====================================
         Registrar usuario
-        ======================================
+        =====================================
         */
         socket.on("register", (userId) => {
+            console.log("🟢 Usuario:", userId);
             onlineUsers.set(userId, socket.id);
-            console.log("Usuario:", userId);
+            // ROOM PERSONAL
+            socket.join(`user_${userId}`);
             io.emit("user_online", userId);
         });
         /*
-        ======================================
+        =====================================
         Entrar conversación
-        ======================================
+        =====================================
         */
         socket.on("join_conversation", (conversationId) => {
+            console.log("JOIN", conversationId);
             socket.join(`conversation_${conversationId}`);
-            console.log("Entró:", conversationId);
         });
         /*
-        ======================================
+        =====================================
         Salir conversación
-        ======================================
+        =====================================
         */
         socket.on("leave_conversation", (conversationId) => {
             socket.leave(`conversation_${conversationId}`);
         });
         /*
-        ======================================
+        =====================================
         Desconectar
-        ======================================
+        =====================================
         */
-        socket.on("join_conversation", (conversationId) => {
-            console.log("JOIN", socket.id, conversationId, new Date().toISOString());
-            socket.join(`conversation_${conversationId}`);
-        });
         socket.on("disconnect", () => {
+            console.log("❌ Socket desconectado:", socket.id);
             for (const [userId, socketId] of onlineUsers.entries()) {
                 if (socketId === socket.id) {
                     onlineUsers.delete(userId);
@@ -59,11 +59,16 @@ function initializeSocket(server) {
                     break;
                 }
             }
-            console.log("Socket desconectado");
         });
     });
     return io;
 }
 function getIO() {
     return io;
+}
+function isUserOnline(userId) {
+    return onlineUsers.has(userId);
+}
+function getOnlineUsers() {
+    return [...onlineUsers.keys()];
 }

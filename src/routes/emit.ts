@@ -10,10 +10,9 @@ Nuevo mensaje
 */
 
 router.post("/emit-message", (req, res) => {
-  console.log("Emitir mensaje:", req.body);
-
   const { conversationId, message } = req.body;
-  console.log("EMIT", conversationId, new Date().toISOString());
+
+  console.log("Emitir mensaje:", conversationId);
 
   getIO().to(`conversation_${conversationId}`).emit("new_message", message);
 
@@ -29,7 +28,6 @@ Typing
 */
 
 router.post("/emit-typing", (req, res) => {
-  console.log("Emitir typing:", req.body);
   const { conversationId, userId } = req.body;
 
   getIO().to(`conversation_${conversationId}`).emit("typing", userId);
@@ -46,7 +44,6 @@ Stop typing
 */
 
 router.post("/emit-stop-typing", (req, res) => {
-  console.log("Emitir stop typing:", req.body);
   const { conversationId, userId } = req.body;
 
   getIO().to(`conversation_${conversationId}`).emit("stop_typing", userId);
@@ -63,10 +60,27 @@ Mensajes leídos
 */
 
 router.post("/emit-read", (req, res) => {
-  console.log("Emitir mensajes leídos:", req.body);
   const { conversationId, userId } = req.body;
 
   getIO().to(`conversation_${conversationId}`).emit("messages_read", userId);
+
+  return res.json({
+    success: true,
+  });
+});
+
+/*
+==========================================
+Nueva notificación
+==========================================
+*/
+
+router.post("/emit-notification", (req, res) => {
+  const { userId, notification } = req.body;
+
+  console.log("Emitir notificación:", userId, notification.title);
+
+  getIO().to(`user_${userId}`).emit("notification", notification);
 
   return res.json({
     success: true,
